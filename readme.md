@@ -1,5 +1,10 @@
 # Welcome to the Anythink Market repo
 
+## Setup
+` yarn install`
+
+## Getting Started
+
 To start the app use: `./start.sh`, it'll start both the backend and the frontend.
 
 Please find more info about each part in the relevant Readme file ([frontend](frontend/readme.md) and [backend](backend/README.md)).
