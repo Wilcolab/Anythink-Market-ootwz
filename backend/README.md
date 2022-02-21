@@ -2,11 +2,19 @@
 
 The Anythink Market backend is Ruby web app written with [Ruby On Rails](https://rubyonrails.org/)
 
+## Setup
+
+Before running the app for the first time, make sure that:
+
+- Ruby 2.7.0 is installed (follow the relevant instructions based on your Ruby version manager preference)
+- Gems are installed (`bundle`)
+- The DB is up and running
+- The relvant DB exists. By default the DB is your username, so you can run `CREATE DATABASE <your username>;` in your favorite postgres client.
+- Migrations have run (`bundle exec rails db:migrate`)
+
 ## Getting started
 
 To start the app use: `./start.sh` from the backend directory.
-
-Make sure your DB is up and running.
 
 ## Dependencies
 
