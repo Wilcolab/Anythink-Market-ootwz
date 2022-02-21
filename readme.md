@@ -3,6 +3,7 @@
 ## Setup
 ` yarn install`
 
+
 ## Getting Started
 
 To start the app use: `./start.sh`, it'll start both the backend and the frontend.
