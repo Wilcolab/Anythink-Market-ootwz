@@ -54,8 +54,7 @@ UserSchema.methods.setPassword = function(password) {
 };
 
 UserSchema.methods.generateJWT = function() {
-  var now = Date.now();
-  var exp = (now / 1000) + (60*60);
+  var exp = Math.floor(Date.now() / 1000) + (60*60);
 
   return jwt.sign(
     {
