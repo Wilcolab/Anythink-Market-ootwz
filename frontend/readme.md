@@ -2,13 +2,7 @@
 
 The Anythink Frontend is an SPA written with [React](https://reactjs.org/) and [Redux](https://redux.js.org/)
 
-## Setup
-
-Run `yarn install`
-
 ## Getting started
-
-To start the app use: `./start.sh` from the frontend directory.
 
 Make sure your server is up and running to serve requests.
 
