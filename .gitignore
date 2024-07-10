@@ -1,138 +1,37 @@
-/config
-config2/*
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-tests/testing_config/deps
-tests/testing_config/home-assistant.log*
+# dependencies
+/node_modules
+/backend/node_modules
+/frontend/node_modules
+/.wilco-helpers/node_modules
+/tests/e2e/node_modules
+/tests/frontend/node_modules/
+/tests/frontend/test-results/
+/tests/frontend/playwright-report/
+/tests/frontend/playwright/.cache/
 
-# hass-release
-data/
-.token
+/.pnp
+.pnp.js
 
-# Translations
-homeassistant/components/*/translations
+# testing
+/coverage
 
-# Hide sublime text stuff
-*.sublime-project
-*.sublime-workspace
+# production
+/backend/build
+/frontend/build
 
-# Hide some OS X stuff
+# misc
 .DS_Store
-.AppleDouble
-.LSOverride
-Icon
-
-# Thumbnails
-._*
-
-# IntelliJ IDEA
-.idea
-*.iml
-
-# pytest
-.pytest_cache
-.cache
-
-# GITHUB Proposed Python stuff:
-*.py[cod]
-__pycache__
-
-# C extensions
-*.so
-
-# Packages
-*.egg
-*.egg-info
-dist
-build
-eggs
-.eggs
-parts
-bin
-var
-sdist
-develop-eggs
-.installed.cfg
-lib
-lib64
-pip-wheel-metadata
-
-# Logs
-*.log
-pip-log.txt
-
-# Unit test / coverage reports
-.coverage
-coverage.xml
-nosetests.xml
-htmlcov/
-test-reports/
-test-results.xml
-test-output.xml
-pytest-*.txt
-
-# Translations
-*.mo
-
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
-
-.python-version
-
-# emacs auto backups
-*~
-*#
-*.orig
-
-# venv stuff
-pyvenv.cfg
-pip-selfcheck.json
-venv
-.venv
-Pipfile*
-share/*
-/Scripts/
-
-# vimmy stuff
-*.swp
-*.swo
-tags
-ctags.tmp
-
-# vagrant stuff
-virtualization/vagrant/setup_done
-virtualization/vagrant/.vagrant
-virtualization/vagrant/config
-
-# Visual Studio Code
-.vscode/*
-!.vscode/cSpell.json
-!.vscode/extensions.json
-!.vscode/tasks.json
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Windows Explorer
-desktop.ini
-/home-assistant.pyproj
-/home-assistant.sln
-/.vs/*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# mypy
-/.mypy_cache/*
-/.dmypy.json
-
-# Secrets
-.lokalise_token
-
-# monkeytype
-monkeytype.sqlite3
-
-# This is left behind by Azure Restore Cache
-tmp_cache
-
-# python-language-server / Rope
-.ropeproject
-
-# Will be created from script/split_tests.py
-pytest_buckets.txt
+#IDEs
+/.idea/

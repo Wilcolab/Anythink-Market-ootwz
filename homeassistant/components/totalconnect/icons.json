@@ -1,6 +1,0 @@
-{
-  "services": {
-    "arm_away_instant": "mdi:shield-lock",
-    "arm_home_instant": "mdi:shield-home"
-  }
-}
