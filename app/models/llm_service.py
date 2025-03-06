@@ -47,6 +47,18 @@ class LLMService:
                 return "[Filtered due to negative sentiment]"
         return response
 
+    def redact_sensitive_data(self, text):
+        """Redact sensitive information from text."""
+        patterns = {
+        'credit_card': r'\b(?:\d[ -]*?){13,16}\b',
+        'email': r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+        }
+        
+        for key, pattern in patterns.items():
+            text = re.sub(pattern, f'[REDACTED {key}]', text)
+        logger.info("Redacted response: %s", text)
+        return text
+
     def generate_response(self, query, context=None):
         system_message = "You are a secure financial information concierge. "
         system_message += "Provide helpful, accurate, and concise responses about financial information. "
@@ -71,7 +83,7 @@ class LLMService:
             if response.choices and len(response.choices) > 0:
                 content = response.choices[0].message.content
                 logger.info("Response: %s", content)
-                return self.context_filter(content)
+                return self.redact_sensitive_data(self.context_filter(content))
             else:
                 return "I'm sorry, I couldn't generate a response. Please try again."
                 
