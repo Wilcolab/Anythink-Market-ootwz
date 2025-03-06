@@ -46,6 +46,7 @@ class LLMService:
         if context:
             system_message += f"\nHere is the relevant context for the user:\n{context}"
         
+        logger.info("User query: %s", query)
         try:
             response = self.client.chat.completions.create(
                 model=self.deployment_name,
@@ -59,7 +60,9 @@ class LLMService:
             )
             
             if response.choices and len(response.choices) > 0:
-                return response.choices[0].message.content
+                content = response.choices[0].message.content
+                logger.info("Response: %s", content)
+                return content
             else:
                 return "I'm sorry, I couldn't generate a response. Please try again."
                 
