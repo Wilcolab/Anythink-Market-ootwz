@@ -1,4 +1,4 @@
-module go-quiz-api
+module github.com/Wilcolab/Anythink-Market-ootwz
 
 go 1.21
 

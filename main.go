@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,6 +8,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Wilcolab/Anythink-Market-ootwz/config"
+	"github.com/Wilcolab/Anythink-Market-ootwz/database"
+	"github.com/Wilcolab/Anythink-Market-ootwz/models"
+	"github.com/Wilcolab/Anythink-Market-ootwz/repository"
 	_ "github.com/lib/pq"
 )
 
@@ -18,51 +21,15 @@ type HealthResponse struct {
 	Message string `json:"message"`
 }
 
-// Question represents a quiz question
-type Question struct {
-	ID       int      `json:"id"`
-	Text     string   `json:"text"`
-	Options  []string `json:"options"`
-	Answer   int      `json:"answer"`
-	Category string   `json:"category"`
-}
-
 // ErrorResponse represents an error response
 type ErrorResponse struct {
 	Error   string `json:"error"`
 	Message string `json:"message"`
 }
 
-// In-memory questions data
-var questions = []Question{
-	{
-		ID:       1,
-		Text:     "What is the capital of France?",
-		Options:  []string{"London", "Berlin", "Paris", "Madrid"},
-		Answer:   2,
-		Category: "Geography",
-	},
-	{
-		ID:       2,
-		Text:     "Which programming language is known for its simplicity and efficiency?",
-		Options:  []string{"Java", "Go", "C++", "Python"},
-		Answer:   1,
-		Category: "Programming",
-	},
-	{
-		ID:       3,
-		Text:     "What is 2 + 2?",
-		Options:  []string{"3", "4", "5", "6"},
-		Answer:   1,
-		Category: "Math",
-	},
-	{
-		ID:       4,
-		Text:     "Who wrote 'Romeo and Juliet'?",
-		Options:  []string{"Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"},
-		Answer:   1,
-		Category: "Literature",
-	},
+// App holds the application dependencies
+type App struct {
+	questionRepo *repository.QuestionRepository
 }
 
 // healthCheckHandler handles the /health endpoint
@@ -85,10 +52,28 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // questionsHandler handles GET /api/questions
-func questionsHandler(w http.ResponseWriter, r *http.Request) {
+func (app *App) questionsHandler(w http.ResponseWriter, r *http.Request) {
 	// Only allow GET method
 	if r.Method != http.MethodGet {
 		sendErrorResponse(w, "Method not allowed", "Only GET method is allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get optional category filter from query parameters
+	category := r.URL.Query().Get("category")
+
+	var questions []models.Question
+	var err error
+
+	if category != "" {
+		questions, err = app.questionRepo.GetByCategory(category)
+	} else {
+		questions, err = app.questionRepo.GetAll()
+	}
+
+	if err != nil {
+		log.Printf("Error fetching questions: %v", err)
+		sendErrorResponse(w, "Database error", "Failed to fetch questions", http.StatusInternalServerError)
 		return
 	}
 
@@ -104,7 +89,7 @@ func questionsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // questionByIDHandler handles GET /api/questions/{id}
-func questionByIDHandler(w http.ResponseWriter, r *http.Request) {
+func (app *App) questionByIDHandler(w http.ResponseWriter, r *http.Request) {
 	// Only allow GET method
 	if r.Method != http.MethodGet {
 		sendErrorResponse(w, "Method not allowed", "Only GET method is allowed", http.StatusMethodNotAllowed)
@@ -125,17 +110,16 @@ func questionByIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Find question by ID
-	var foundQuestion *Question
-	for i := range questions {
-		if questions[i].ID == id {
-			foundQuestion = &questions[i]
-			break
-		}
+	// Get question from database
+	question, err := app.questionRepo.GetByID(id)
+	if err != nil {
+		log.Printf("Error fetching question by ID %d: %v", id, err)
+		sendErrorResponse(w, "Database error", "Failed to fetch question", http.StatusInternalServerError)
+		return
 	}
 
 	// Check if question was found
-	if foundQuestion == nil {
+	if question == nil {
 		sendErrorResponse(w, "Question not found", fmt.Sprintf("Question with ID %d does not exist", id), http.StatusNotFound)
 		return
 	}
@@ -145,7 +129,7 @@ func questionByIDHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	// Encode and send JSON response
-	if err := json.NewEncoder(w).Encode(foundQuestion); err != nil {
+	if err := json.NewEncoder(w).Encode(question); err != nil {
 		sendErrorResponse(w, "Encoding failed", "Failed to encode question response", http.StatusInternalServerError)
 		return
 	}
@@ -165,42 +149,46 @@ func sendErrorResponse(w http.ResponseWriter, error, message string, statusCode 
 }
 
 func main() {
+	// Load configuration
+	cfg := config.Load()
+
 	// Connect to database
-	db := connectDB()
+	db, err := database.Connect(cfg)
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
 	defer db.Close()
+
+	// Run migrations
+	if err := database.RunMigrations(db, "migrations"); err != nil {
+		log.Fatal("Failed to run migrations:", err)
+	}
+
+	// Initialize repositories
+	questionRepo := repository.NewQuestionRepository(db)
+
+	// Initialize app with dependencies
+	app := &App{
+		questionRepo: questionRepo,
+	}
 
 	// Health check endpoint
 	http.HandleFunc("/health", healthCheckHandler)
 
 	// API endpoints
-	http.HandleFunc("/api/questions", questionsHandler)
-	http.HandleFunc("/api/questions/", questionByIDHandler)
+	http.HandleFunc("/api/questions", app.questionsHandler)
+	http.HandleFunc("/api/questions/", app.questionByIDHandler)
 
 	// Root endpoint
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, Go API! 🐹")
+		fmt.Fprintf(w, "Hello, Go Quiz API! 🐹")
 	})
 
-	fmt.Println("🚀 Server starting on port 8080...")
+	fmt.Printf("🚀 Server starting on port %s...\n", cfg.Port)
 	fmt.Println("📋 Available endpoints:")
 	fmt.Println("  GET /health - Health check")
 	fmt.Println("  GET /api/questions - List all questions")
+	fmt.Println("  GET /api/questions?category={category} - Filter questions by category")
 	fmt.Println("  GET /api/questions/{id} - Get question by ID")
-	log.Fatal(http.ListenAndServe(":8080", nil))
-}
-
-func connectDB() *sql.DB {
-	connStr := "host=localhost port=5432 user=postgres password=postgres dbname=postgres sslmode=disable"
-
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
-	}
-
-	if err = db.Ping(); err != nil {
-		log.Fatal("Failed to ping database:", err)
-	}
-
-	fmt.Println("✅ Connected to database")
-	return db
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
 }
