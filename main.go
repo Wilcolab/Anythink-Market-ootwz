@@ -148,6 +148,110 @@ func sendErrorResponse(w http.ResponseWriter, error, message string, statusCode 
 	json.NewEncoder(w).Encode(errorResponse)
 }
 
+// quizSubmitHandler handles POST /api/quiz/submit
+func (app *App) quizSubmitHandler(w http.ResponseWriter, r *http.Request) {
+	// Only allow POST method
+	if r.Method != http.MethodPost {
+		sendErrorResponse(w, "Method not allowed", "Only POST method is allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse JSON request body
+	var submission models.QuizSubmission
+	if err := json.NewDecoder(r.Body).Decode(&submission); err != nil {
+		sendErrorResponse(w, "Invalid JSON", "Failed to parse request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate submission
+	if len(submission.Answers) == 0 {
+		sendErrorResponse(w, "Invalid submission", "At least one answer is required", http.StatusBadRequest)
+		return
+	}
+
+	// Get all questions for validation and scoring
+	questions, err := app.questionRepo.GetAll()
+	if err != nil {
+		log.Printf("Error fetching questions for scoring: %v", err)
+		sendErrorResponse(w, "Database error", "Failed to fetch questions", http.StatusInternalServerError)
+		return
+	}
+
+	// Create a map for quick question lookup
+	questionMap := make(map[int]models.Question)
+	for _, q := range questions {
+		questionMap[q.ID] = q
+	}
+
+	// Validate answers and calculate score
+	var results []models.AnswerResult
+	correctAnswers := 0
+	totalQuestions := len(submission.Answers)
+
+	// Track answered question IDs to prevent duplicates
+	answeredQuestions := make(map[int]bool)
+
+	for _, answer := range submission.Answers {
+		// Check for duplicate question IDs
+		if answeredQuestions[answer.QuestionID] {
+			sendErrorResponse(w, "Invalid submission", fmt.Sprintf("Duplicate answer for question ID %d", answer.QuestionID), http.StatusBadRequest)
+			return
+		}
+		answeredQuestions[answer.QuestionID] = true
+
+		// Find the question
+		question, exists := questionMap[answer.QuestionID]
+		if !exists {
+			sendErrorResponse(w, "Invalid question", fmt.Sprintf("Question with ID %d does not exist", answer.QuestionID), http.StatusBadRequest)
+			return
+		}
+
+		// Validate answer range
+		if answer.Answer < 0 || answer.Answer >= len(question.Options) {
+			sendErrorResponse(w, "Invalid answer", fmt.Sprintf("Answer %d is out of range for question %d", answer.Answer, answer.QuestionID), http.StatusBadRequest)
+			return
+		}
+
+		// Check if answer is correct
+		isCorrect := answer.Answer == question.Answer
+		if isCorrect {
+			correctAnswers++
+		}
+
+		// Add to results
+		results = append(results, models.AnswerResult{
+			QuestionID:    answer.QuestionID,
+			UserAnswer:    answer.Answer,
+			CorrectAnswer: question.Answer,
+			IsCorrect:     isCorrect,
+			Question:      question.Text,
+		})
+	}
+
+	// Calculate percentage and determine pass/fail
+	percentage := float64(correctAnswers) / float64(totalQuestions) * 100
+	passed := percentage >= 60.0 // Pass threshold is 60%
+
+	// Create response
+	response := models.QuizResponse{
+		Score:      correctAnswers,
+		Total:      totalQuestions,
+		Percentage: percentage,
+		Passed:     passed,
+		Results:    results,
+	}
+
+	// Set content type to JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	// Encode and send JSON response
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		sendErrorResponse(w, "Encoding failed", "Failed to encode quiz response", http.StatusInternalServerError)
+		return
+	}
+}
+
 func main() {
 	// Load configuration
 	cfg := config.Load()
@@ -178,6 +282,7 @@ func main() {
 	// API endpoints
 	http.HandleFunc("/api/questions", app.questionsHandler)
 	http.HandleFunc("/api/questions/", app.questionByIDHandler)
+	http.HandleFunc("/api/quiz/submit", app.quizSubmitHandler)
 
 	// Root endpoint
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -190,5 +295,6 @@ func main() {
 	fmt.Println("  GET /api/questions - List all questions")
 	fmt.Println("  GET /api/questions?category={category} - Filter questions by category")
 	fmt.Println("  GET /api/questions/{id} - Get question by ID")
+	fmt.Println("  POST /api/quiz/submit - Submit quiz answers and get score")
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
 }
