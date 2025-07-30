@@ -25,11 +25,10 @@ jobs:
         uses: actions/checkout@v2
         
       - id: kubernetes-flag-defined
-        # if: "${{ env.ENABLE_KUBERNETES != '' }}"
-        # run: echo "DEFINED=true" >> $GITHUB_OUTPUT
-        run: echo "HELLO" >> $GITHUB_OUTPUT
-        # env:
-        #   ENABLE_KUBERNETES: ${{ secrets.ENABLE_KUBERNETES }}
+        if: "${{ env.ENABLE_KUBERNETES != '' }}"
+        run: echo "DEFINED=true" >> $GITHUB_OUTPUT
+        env:
+          ENABLE_KUBERNETES: ${{ secrets.ENABLE_KUBERNETES }}
 
   # check-secret:
   #   runs-on: ubuntu-20.04
