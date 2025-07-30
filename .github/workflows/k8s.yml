@@ -23,12 +23,12 @@ jobs:
     steps:
       - name: Check out project
         uses: actions/checkout@v2
-  #   steps:
-  #     - id: kubernetes-flag-defined
-  #       if: "${{ env.ENABLE_KUBERNETES != '' }}"
-  #       run: echo "DEFINED=true" >> $GITHUB_OUTPUT
-  #       env:
-  #         ENABLE_KUBERNETES: ${{ secrets.ENABLE_KUBERNETES }}
+        
+      - id: kubernetes-flag-defined
+        if: "${{ env.ENABLE_KUBERNETES != '' }}"
+        run: echo "DEFINED=true" >> $GITHUB_OUTPUT
+        env:
+          ENABLE_KUBERNETES: ${{ secrets.ENABLE_KUBERNETES }}
 
   # check-secret:
   #   runs-on: ubuntu-20.04
