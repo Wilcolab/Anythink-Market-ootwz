@@ -16,15 +16,14 @@ jobs:
   check-kubernetes-enabled:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    name: Pr checks
+    name: Shem tests
+    outputs:
+      kubernetes-enabled: ${{ steps.kubernetes-flag-defined.outputs.DEFINED }}
+  #   runs-on: ubuntu-20.04
     
     steps:
       - name: Check out project
         uses: actions/checkout@v2
-    
-  #   runs-on: ubuntu-20.04
-  #   outputs:
-  #     kubernetes-enabled: ${{ steps.kubernetes-flag-defined.outputs.DEFINED }}
   #   steps:
   #     - id: kubernetes-flag-defined
   #       if: "${{ env.ENABLE_KUBERNETES != '' }}"
