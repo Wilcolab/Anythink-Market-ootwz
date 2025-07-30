@@ -13,12 +13,15 @@ concurrency:
   cancel-in-progress: true
   
 jobs:
-  wilco:
+  check-kubernetes-enabled:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     name: Pr checks
     
-  # check-kubernetes-enabled:
+    steps:
+      - name: Check out project
+        uses: actions/checkout@v2
+    
   #   runs-on: ubuntu-20.04
   #   outputs:
   #     kubernetes-enabled: ${{ steps.kubernetes-flag-defined.outputs.DEFINED }}
