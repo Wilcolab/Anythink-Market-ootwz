@@ -1,9 +1,12 @@
 name: Build and deploy to Kubernetes
+# on:
+#   push:
+#     branches:
+#       - main
 on:
-  push:
+  pull_request:
     branches:
       - main
-      - 'shem/**'
       
 concurrency:
   group: k8s
@@ -21,26 +24,26 @@ jobs:
         env:
           ENABLE_KUBERNETES: ${{ secrets.ENABLE_KUBERNETES }}
 
-  check-secret:
-    runs-on: ubuntu-20.04
-    needs: [check-kubernetes-enabled]
-    outputs:
-      aws-creds-defined: ${{ steps.aws-creds-defined.outputs.DEFINED }}
-      kubeconfig-defined: ${{ steps.kubeconfig-defined.outputs.DEFINED }}
-    if: needs.check-kubernetes-enabled.outputs.kubernetes-enabled == 'true'
-    steps:
-      - id: aws-creds-defined
-        if: "${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' }}"
-        run: echo "DEFINED=true" >> $GITHUB_OUTPUT
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  # check-secret:
+  #   runs-on: ubuntu-20.04
+  #   needs: [check-kubernetes-enabled]
+  #   outputs:
+  #     aws-creds-defined: ${{ steps.aws-creds-defined.outputs.DEFINED }}
+  #     kubeconfig-defined: ${{ steps.kubeconfig-defined.outputs.DEFINED }}
+  #   if: needs.check-kubernetes-enabled.outputs.kubernetes-enabled == 'true'
+  #   steps:
+  #     - id: aws-creds-defined
+  #       if: "${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' }}"
+  #       run: echo "DEFINED=true" >> $GITHUB_OUTPUT
+  #       env:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - id: kubeconfig-defined
-        if: "${{ env.KUBECONFIG != '' }}"
-        run: echo "DEFINED=true" >> $GITHUB_OUTPUT
-        env:
-          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+  #     - id: kubeconfig-defined
+  #       if: "${{ env.KUBECONFIG != '' }}"
+  #       run: echo "DEFINED=true" >> $GITHUB_OUTPUT
+  #       env:
+  #         KUBECONFIG: ${{ secrets.KUBECONFIG }}
 
   # build-backend:
   #   name: Build backend image
