@@ -13,16 +13,21 @@ concurrency:
   cancel-in-progress: true
   
 jobs:
-  check-kubernetes-enabled:
-    runs-on: ubuntu-20.04
-    outputs:
-      kubernetes-enabled: ${{ steps.kubernetes-flag-defined.outputs.DEFINED }}
-    steps:
-      - id: kubernetes-flag-defined
-        if: "${{ env.ENABLE_KUBERNETES != '' }}"
-        run: echo "DEFINED=true" >> $GITHUB_OUTPUT
-        env:
-          ENABLE_KUBERNETES: ${{ secrets.ENABLE_KUBERNETES }}
+  wilco:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    name: Pr checks
+    
+  # check-kubernetes-enabled:
+  #   runs-on: ubuntu-20.04
+  #   outputs:
+  #     kubernetes-enabled: ${{ steps.kubernetes-flag-defined.outputs.DEFINED }}
+  #   steps:
+  #     - id: kubernetes-flag-defined
+  #       if: "${{ env.ENABLE_KUBERNETES != '' }}"
+  #       run: echo "DEFINED=true" >> $GITHUB_OUTPUT
+  #       env:
+  #         ENABLE_KUBERNETES: ${{ secrets.ENABLE_KUBERNETES }}
 
   # check-secret:
   #   runs-on: ubuntu-20.04
