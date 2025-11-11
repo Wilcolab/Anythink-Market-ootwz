@@ -37,7 +37,12 @@ async def secure_query(
     current_user: Optional[User] = Depends(get_optional_user)
 ):
     query = request.query
-    
+    if not llm_service.validate_user_input(query, "no_personal_data, no_financial_data"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The query contains prohibited content."
+        )
+
     intent_tag = llm_service.interpret_user_intent(query)
     
     if current_user:
